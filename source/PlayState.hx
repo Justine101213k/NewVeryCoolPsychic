@@ -51,6 +51,9 @@ import Achievements;
 import StageData;
 import FunkinLua;
 import DialogueBoxPsych;
+#if mobileC
+import ui.Mobilecontrols as AndroidControls;
+#end
 
 #if sys
 import sys.FileSystem;
@@ -62,6 +65,10 @@ class PlayState extends MusicBeatState
 {
 	public static var STRUM_X = 42;
 	public static var STRUM_X_MIDDLESCROLL = -278;
+	
+	#if mobileC
+	var mcontrols:AndroidControls;
+	#end
 
 	public static var ratingStuff:Array<Dynamic> = [
 		['You Suck!', 0.2], //From 0% to 19%
@@ -287,10 +294,10 @@ class PlayState extends MusicBeatState
 		debugKeysCharacter = ClientPrefs.copyKey(ClientPrefs.keyBinds.get('debug_2'));
 
 		keysArray = [
-			ClientPrefs.copyKey(ClientPrefs.keyBinds.get('note_left')),
-			ClientPrefs.copyKey(ClientPrefs.keyBinds.get('note_down')),
-			ClientPrefs.copyKey(ClientPrefs.keyBinds.get('note_up')),
-			ClientPrefs.copyKey(ClientPrefs.keyBinds.get('note_right'))
+			ClientPrefs.copyKey(ClientPrefs.keyBinds.get('ui_left')),
+			ClientPrefs.copyKey(ClientPrefs.keyBinds.get('ui_down')),
+			ClientPrefs.copyKey(ClientPrefs.keyBinds.get('ui_up')),
+			ClientPrefs.copyKey(ClientPrefs.keyBinds.get('ui_right'))
 		];
 
 		// For the "Just the Two of Us" achievement
@@ -1040,6 +1047,24 @@ class PlayState extends MusicBeatState
 		timeBarBG.cameras = [camHUD];
 		timeTxt.cameras = [camHUD];
 		doof.cameras = [camHUD];
+	
+	        #if mobileC
+		mcontrols = new AndroidControls();
+	        switch(mcontrols.mode) {
+			case VIRTUALPAD_RIGHT | VIRTUALPAD_LEFT | VIRTUALPAD_CUSTOM:
+			     controls.setVirtualPad(mcontrols._virtualPad, FULL, NONE);
+			case HITBOX:
+			     controls.setHitBox(mcontrols._hitbox);
+			default:
+		}
+	        trackedinputs = controls.trackedinputs;
+	        controls.trackedinputs = [];
+	
+	        mcontrols.cameras = [camPad];
+	        mcontrols.alpha = 0;
+
+	        add(mcontrols);
+	        #end
 
 		// if (SONG.song == 'South')
 		// FlxG.camera.alpha = 0.7;
@@ -1484,6 +1509,10 @@ class PlayState extends MusicBeatState
 			callOnLuas('onStartCountdown', []);
 			return;
 		}
+		
+		#if mobileC
+		FlxTween.tween(mcontrols, {alpha: 1}, 1, {ease:FlxEase.quadInOut});
+		#end
 
 		inCutscene = false;
 		var ret:Dynamic = callOnLuas('onStartCountdown', []);
@@ -2244,8 +2273,12 @@ class PlayState extends MusicBeatState
 			botplaySine += 180 * elapsed;
 			botplayTxt.alpha = 1 - Math.sin((Math.PI * botplaySine) / 180);
 		}
+		var pauseKey = controls.PAUSE;
+		#if android
+		if(MusicBeatState.androidback) pauseKey = true;
+		#end
 
-		if (controls.PAUSE && startedCountdown && canPause)
+		if (pauseKey && startedCountdown && canPause)
 		{
 			var ret:Dynamic = callOnLuas('onPause', []);
 			if(ret != FunkinLua.Function_Stop) {
@@ -3102,6 +3135,10 @@ class PlayState extends MusicBeatState
 	function finishSong():Void
 	{
 		var finishCallback:Void->Void = endSong; //In case you want to change it in a specific song.
+		
+		#if mobileC
+		FlxTween.tween(mcontrols, {alpha: 0}, 0.8, {ease:FlxEase.quadInOut});
+		#end
 
 		updateTime = false;
 		FlxG.sound.music.volume = 0;
@@ -3633,16 +3670,16 @@ class PlayState extends MusicBeatState
 	private function keyShit():Void
 	{
 		// HOLDING
-		var up = controls.NOTE_UP;
-		var right = controls.NOTE_RIGHT;
-		var down = controls.NOTE_DOWN;
-		var left = controls.NOTE_LEFT;
+		var up = controls.UI_UP;
+		var right = controls.UI_RIGHT;
+		var down = controls.UI_DOWN;
+		var left = controls.UI_LEFT;
 		var controlHoldArray:Array<Bool> = [left, down, up, right];
 		
 		// TO DO: Find a better way to handle controller inputs, this should work for now
 		if(ClientPrefs.controllerMode)
 		{
-			var controlArray:Array<Bool> = [controls.NOTE_LEFT_P, controls.NOTE_DOWN_P, controls.NOTE_UP_P, controls.NOTE_RIGHT_P];
+			var controlArray:Array<Bool> = [controls.UI_LEFT_P, controls.UI_DOWN_P, controls.UI_UP_P, controls.UI_RIGHT_P];
 			if(controlArray.contains(true))
 			{
 				for (i in 0...controlArray.length)
@@ -3681,7 +3718,7 @@ class PlayState extends MusicBeatState
 		// TO DO: Find a better way to handle controller inputs, this should work for now
 		if(ClientPrefs.controllerMode)
 		{
-			var controlArray:Array<Bool> = [controls.NOTE_LEFT_R, controls.NOTE_DOWN_R, controls.NOTE_UP_R, controls.NOTE_RIGHT_R];
+			var controlArray:Array<Bool> = [controls.UI_LEFT_R, controls.UI_DOWN_R, controls.UI_UP_R, controls.UI_RIGHT_R];
 			if(controlArray.contains(true))
 			{
 				for (i in 0...controlArray.length)
