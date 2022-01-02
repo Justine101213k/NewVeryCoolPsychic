@@ -146,6 +146,9 @@ class CreditsState extends MusicBeatState
 		bg.color = getCurrentBGColor();
 		intendedColor = bg.color;
 		changeSelection();
+		#if android
+		addVirtualPad(UP_DOWN, A_B);
+		#end
 		super.create();
 	}
 
@@ -167,8 +170,12 @@ class CreditsState extends MusicBeatState
 		{
 			changeSelection(1);
 		}
+		var back = controls.BACK;
+		#if android
+		if(MusicBeatState.androidback) back = true;
+		#end
 
-		if (controls.BACK)
+		if (back)
 		{
 			if(colorTween != null) {
 				colorTween.cancel();
