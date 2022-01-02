@@ -5,6 +5,11 @@ import flixel.FlxG;
 import flixel.FlxSubState;
 import flixel.FlxBasic;
 import flixel.FlxSprite;
+#if mobileC
+import flixel.input.actions.FlxActionInput as Input;
+import flixel.FlxCamera as Cum;
+import ui.FlxVirtualPad;
+#end
 
 class MusicBeatSubstate extends FlxSubState
 {
@@ -22,6 +27,32 @@ class MusicBeatSubstate extends FlxSubState
 
 	inline function get_controls():Controls
 		return PlayerSettings.player1.controls;
+	
+	#if mobileC
+	var _virtualpad:FlxVirtualPad;
+	var camPad:Cum = new Cum();
+	
+	var trackedinputs:Array<Input> = [];
+	
+	function addVirtualPad(?DPad:FlxDPadMode, ?Action:FlxActionMode) {
+		_virtualpad = new FlxVirtualPad(DPad, Action);
+		_virtualpad.alpha = 0.75;
+		camPad.bgColor.alpha = 0;
+		FlxG.cameras.add(camPad);
+		Cam.defaultCameras = [camPad];
+		_virtualpad.cameras = [camPad];
+		this.add(_virtualpad);
+		controls.setVirtualPad(_virtualpad, DPad, Action);
+		trackedinputs = controls.trackedinputs;
+		controls.trackedinputs = [];
+	}
+	
+	override function destroy() {
+		super.destroy();
+		
+		controls.removeFlxInput(trackedinputs);
+	}
+	#end
 
 	override function update(elapsed:Float)
 	{
